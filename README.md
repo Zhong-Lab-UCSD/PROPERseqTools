@@ -2,8 +2,12 @@
 
 ## Overview
 Protein-protein Interaction Sequencing (PROPER-seq) is a high-throughput sequencing technology that efficiently maps cell wide protein-protein interactions in vitro. Here, we distribute PROPERseqTools, a standardized data processing pipeline to identify protein-protein interactions from fastq files of PROPER-seq experiments.<br />
-The schematic diagram below describes the various stages of the PROPERseqTools pipeline including pre-processing of the raw reads, alignment to the transcritome, identification of chimeric read pairs and identification of protein-protein interactions.
+The schematic diagram below describes the various stages of the PROPERseqTools pipeline including pre-processing of the raw reads, alignment to the transcritome, identification of chimeric read pairs and identification of protein-protein interactions.<br />
 ![](https://github.com/Zhong-Lab-UCSD/PROPERseqTools/blob/master/image.png)
+- At the pre-processing stage, with raw read pairs from the sequencing library as input, linker and adapter sequences are first removed. Low-quality and too short reads are then removed to get processed read pairs. 
+- At the alignment stage, the pre-processed read pairs are mapped to the target transcriptome separately. The read pairs are then deduplicated based on the external coordinates of their primary alignments to get mapped read pairs. 
+- At the next stage, we identify chimeric read pairs from the mapped read pairs. We select read pairs whose two ends’ primary alignments are mapped to different protein-coding genes and further check the read pairs to see if both ends have over 50% of their read bases match the reference transcriptome and if both ends have no shared lesser alignments. The read pairs passing the quality checks above are identified as chimeric read pairs. 
+- At the stage of protein-protein interactions identification, for each chimeric read pair, we apply various statistical test and cutoffs inculding chi-square test, an odds ratio cutoff and a positive read count cutoff to to finally identify protein-protein interactions. 
 
 
 ## Software Requirements
