@@ -59,6 +59,7 @@ properseqTools -a /path/to/read1.fastq
                -b /path/to/read2.fastq
                -i /path/to/bwaIndex/transcriptome.fa
                -o /path/to/outputDir
+               -g /path/to/refSeq_tx_gene_type.csv
            
 </code></pre>
 
