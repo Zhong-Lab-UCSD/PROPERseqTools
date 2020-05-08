@@ -5,8 +5,8 @@ Protein-protein Interaction Sequencing (PROPER-seq) is a high-throughput sequenc
 The schematic diagram below describes the various stages of the PROPERseqTools pipeline including pre-processing of the raw reads, alignment to the transcritome, identification of chimeric read pairs and identification of protein-protein interactions.<br />
 ![](https://github.com/Zhong-Lab-UCSD/PROPERseqTools/blob/master/workflow.PNG)
 - At the pre-processing stage, with raw read pairs from the sequencing library as input, linker and adapter sequences are first removed. Low-quality and too short reads are then removed to get processed read pairs. 
-- At the alignment stage, the pre-processed read pairs are mapped to the target transcriptome separately. The read pairs are then deduplicated based on the external coordinates of their primary alignments to get mapped read pairs. 
-- At the next stage, we identify chimeric read pairs from the mapped read pairs. We select read pairs whose two ends’ primary alignments are mapped to different protein-coding genes and further check the read pairs to see if both ends have over 50% of their read bases match the reference transcriptome and if both ends have no shared lesser alignments. The read pairs passing the quality checks above are identified as chimeric read pairs. 
+- At the alignment stage, the pre-processed read pairs are mapped to the target transcriptome separately. The read pairs are then sorted based on the external coordinates of their primary alignments to get mapped read pairs. 
+- At the next stage, we identify chimeric read pairs from the mapped read pairs. We select read pairs whose two ends’ primary alignments are mapped to different protein-coding genes and further check the read pairs to see if both ends have over 50% of their read bases match the reference transcriptome and if both ends have no shared lesser alignments. The read pairs passing the quality checks above are further deduplicated to get identified as chimeric read pairs. 
 - At the stage of protein-protein interactions identification, for each chimeric read pair, we apply various statistical test and cutoffs inculding chi-square test, an odds ratio cutoff and a positive read count cutoff to to finally identify protein-protein interactions. 
 ## Workflow
 1. Raw read pairs from the PROPER-seq experiment are present in `.fastq` files.
@@ -14,12 +14,13 @@ The schematic diagram below describes the various stages of the PROPERseqTools p
 3. Fastp is then applied to remove low-quality reads whose mean quality is lower than Q20 and too short reads whose length is shorter than 20 bp.
 3. The remaing read pairs are output as pre-processed read pairs in `.fastq` files.
 4. The pre-processed read pairs are mapped to transcriptome with BWA separately. ‘-a’ option is enabled to keep all found alignments using default threshold of BWA. This is used in the later filtering of potential homologous read pairs. 
-5. The mapped read pairs are then deduplicated based on the external coordinates of their primary alignments.
-6. The deduplicated read pairs are output as mapped read pairs. Their transcriptome alignment information is stored in both `.bed` and `.bam` files.
+5. The mapped read pairs are then sorted based on the external coordinates of their primary alignments.
+6. The sorted read pairs are output as mapped read pairs. Their transcriptome alignment information is stored in both `.bed` and `.bam` files.
 7. The transcriptome alignment information of mapped read pairs is utilized to select read pairs whose two ends’ primary alignments are mapped to different protein-coding genes. The selected read pairs are further checked to see if both ends have over 50% of their read bases matches the reference transcriptome based on the CIGAR string and if both ends have no shared lesser alignments. 
-8. The read pairs passing the quality checks are output as chimeric read pairs from the library in `chimericReadPairs.csv`. 
-9. Chi-square test is applied to the chimeric read pairs. Benjamini-Hochberg adjustment is applied to correct all the p-values. Gene pairs with an adjusted p-value less than 0.05 (default) and with an odds ratio larger than 1 (default) are kept. Gene pairs with mapped chimeric read pair count in the library larger than 4 (default) times the average number of mapped chimeric read pairs per gene pair in the positive library are kept. 
-10. The kept gene pairs are output as protein-protein interactions in `proteinProteinInteractions.csv`.
+8. The read pairs passing the quality checks are then deduplicated based on the external coordinates of their primary alignments.
+9. The deduplicated read pairs are identified as chimeric read pairs from the library. Their read ids and alignment infomation of the primary alignment are output in `chimericReadPairs.csv`. 
+10. Chi-square test is applied to the chimeric read pairs. Benjamini-Hochberg adjustment is applied to correct all the p-values. Gene pairs with an adjusted p-value less than 0.05 (default) and with an odds ratio larger than 1 (default) are kept. Gene pairs with mapped chimeric read pair count in the library larger than 4 (default) times the average number of mapped chimeric read pairs per gene pair in the positive library are kept. 
+11. The kept gene pairs are output as protein-protein interactions in `proteinProteinInteractions.csv`.
 
 
 ## Software Requirements
