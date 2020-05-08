@@ -24,6 +24,7 @@ with open(sys.argv[2],'r') as f:
             lineStore=[]            
 targetFile.close()
 total=total/4
-targetFile==open('%s/summary.csv'%(sys.argv[1]),'w')
-targetFile.write('#input_read_pairs,%d\n'%(total))
-targetFile.close()
+if sys.argv[4]=='yes':
+    targetFile=open('%s/summary.csv'%(sys.argv[3]),'w')
+    targetFile.write('#input_read_pairs,%d\n'%(total))
+    targetFile.close()

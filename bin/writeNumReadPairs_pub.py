@@ -33,6 +33,6 @@ with open('%s/processedFastq/R2.cutadapt.fastp.fastq'%(sys.argv[1]),'r') as f:
 bb= (len(set(haList1)&set(haList2)))
 
 
-targetFile==open('%s/summary.csv'%(sys.argv[1]),'a')
+targetFile=open('%s/summary.csv'%(sys.argv[1]),'a')
 targetFile.write('#read_pairs_used_for_alignment,%d\n'%(bb))
 targetFile.close()

@@ -18,7 +18,7 @@ helpFunction()
    echo 
    echo
    exit 1 # Exit script after printing help
-}s
+}
 
 while getopts "a:b:t:o:i:h:r:p:d:c:g:" opt
 do
@@ -27,7 +27,7 @@ do
       b ) read2="$OPTARG" ;;
       t ) numT="$OPTARG" ;;
       o ) outputDir="$OPTARG" ;;
-      i ) genomeFa="$OPTARG" ;;
+      i ) bwaIndex="$OPTARG" ;;
       r ) removeFlag="$OPTARG" ;;
       p ) pCutoff="$OPTARG" ;;
       d ) oddsCutoff="$OPTARG" ;;
@@ -39,9 +39,27 @@ do
 done
 
 # Print helpFunction in case parameters are empty
-if [ -z "$read1" ] || [ -z "$read2" ] || [ -z "$bwaIndex" ] || [ -z "$outputDir" ] || [ -z "$geneDic" ]
+if [ -z "$read1" ] || [ -z "$read2" ]
 then
-   echo "Some or all of the parameters are empty";
+   echo "read1 or read2 missing";
+   helpFunction
+fi
+
+if [ -z "$bwaIndex" ]
+then
+   echo "bwa index file missing";
+   helpFunction
+fi
+
+if [ -z "$outputDir" ]
+then
+   echo "ouput directory missing";
+   helpFunction
+fi
+
+if [ -z "$geneDic" ]
+then
+   echo "transcript gene dictionary file missing";
    helpFunction
 fi
 
@@ -84,23 +102,22 @@ wait
 
 cutadapt -j $numT -a TGACCAAGACGCCAAAAACATAAAGAAAGGCCCGGCGCCATTGGTCA -a TGACCAATGGCGCCGGGCCTTTCTTTATGTTTTTGGCGTCTTGGTCA -g TTCACTGGAGGGGGGCTCACGAGTAAGGAGGATCCAACATG -g CATGTTGGATCCTCCTTACTCGTGAGCCCCCCTCCAGTGAA -O 23 $read1 > $outputDir/intermediateFiles/R1.cutadapt.fastq 2> $outputDir/intermediateFiles/R1.linkers.txt &
 
-cutadapt -j $numT -a TGACCAAGACGCCAAAAACATAAAGAAAGGCCCGGCGCCATTGGTCA -a TGACCAATGGCGCCGGGCCTTTCTTTATGTTTTTGGCGTCTTGGTCA -g TTCACTGGAGGGGGGCTCACGAGTAAGGAGGATCCAACATG -g CATGTTGGATCCTCCTTACTCGTGAGCCCCCCTCCAGTGAA -O 23 $read1 > $outputDir/intermediateFiles/R2.cutadapt.fastq 2> $outputDir/intermediateFiles/R2.linkers.txt &
+cutadapt -j $numT -a TGACCAAGACGCCAAAAACATAAAGAAAGGCCCGGCGCCATTGGTCA -a TGACCAATGGCGCCGGGCCTTTCTTTATGTTTTTGGCGTCTTGGTCA -g TTCACTGGAGGGGGGCTCACGAGTAAGGAGGATCCAACATG -g CATGTTGGATCCTCCTTACTCGTGAGCCCCCCTCCAGTGAA -O 23 $read2 > $outputDir/intermediateFiles/R2.cutadapt.fastq 2> $outputDir/intermediateFiles/R2.linkers.txt &
 wait
 
 
-python processFastq_pub.py $outputDir/intermediateFiles/R1.cutadapt.lengthFiltered.fastq $outputDir/intermediateFiles/R1.cutadapt.fastq $outputDir 2> $outputDir/errorLog.txt &
-python processFastq_pub.py $outputDir/intermediateFiles/R2.cutadapt.lengthFiltered.fastq $outputDir/intermediateFiles/R2.cutadapt.fastq $outputDir 2> $outputDir/errorLog.txt &
+python processFastq_pub.py $outputDir/intermediateFiles/R1.cutadapt.lengthFiltered.fastq $outputDir/intermediateFiles/R1.cutadapt.fastq $outputDir yes 2>> $outputDir/errorLog.txt &
+python processFastq_pub.py $outputDir/intermediateFiles/R2.cutadapt.lengthFiltered.fastq $outputDir/intermediateFiles/R2.cutadapt.fastq $outputDir no 2>> $outputDir/errorLog.txt &
 wait
 
-fastp -w $numT -i $outputDir/intermediateFiles/R1.cutadapt.lengthFiltered.fastq -I $outputDir/intermediateFiles/R2.cutadapt.lengthFiltered.fastq -o $outputDir/processedFastq/R1.cutadapt.fastp.fastq -O $outputDir/processedFastq/R2.cutadapt.fastp.fastq -h $outputDir/intermediateFiles/fastp.html -j $outputDir/intermediateFiles/fastp.json 2> $outputDir/errorLog.txt
+fastp -w $numT -i $outputDir/intermediateFiles/R1.cutadapt.lengthFiltered.fastq -I $outputDir/intermediateFiles/R2.cutadapt.lengthFiltered.fastq -o $outputDir/processedFastq/R1.cutadapt.fastp.fastq -O $outputDir/processedFastq/R2.cutadapt.fastp.fastq -h $outputDir/intermediateFiles/fastp.html -j $outputDir/intermediateFiles/fastp.json 2>> $outputDir/errorLog.txt
 wait
 
-python writeNumReadPairs_pub.py $outputDir 2> $outputDir/errorLog.txt
+python writeNumReadPairs_pub.py $outputDir 2>> $outputDir/errorLog.txt
 wait
 
 mkdir $outputDir/alignment/read1_tx
 mkdir $outputDir/alignment/read2_tx
-#mkdir results/${condition}
 wait
 
 source=$outputDir/processedFastq
@@ -108,46 +125,44 @@ target=$outputDir/alignment/
 wait
 
 
-bwa mem -a -t $numT $genomeFa $source/R1.cutadapt.fastp.fastq > $target/read1_tx/alignment.sam 2> $outputDir/errorLog.txt &
-bwa mem -a -t $numT $genomeFa $source/R2.cutadapt.fastp.fastq > $target/read2_tx/alignment.sam 2> $outputDir/errorLog.txt &
+bwa mem -a -t $numT $bwaIndex $source/R1.cutadapt.fastp.fastq > $target/read1_tx/alignment.sam 2>> $outputDir/errorLog.txt &
+bwa mem -a -t $numT $bwaIndex $source/R2.cutadapt.fastp.fastq > $target/read2_tx/alignment.sam 2>> $outputDir/errorLog.txt &
 wait
 
-samtools view -H $target/read1_tx/alignment.sam > $target/read1_tx/header.sam 2> $outputDir/errorLog.txt &
-samtools view -H $target/read2_tx/alignment.sam > $target/read2_tx/header.sam 2> $outputDir/errorLog.txt &
+samtools view -H $target/read1_tx/alignment.sam > $target/read1_tx/header.sam 2>> $outputDir/errorLog.txt &
+samtools view -H $target/read2_tx/alignment.sam > $target/read2_tx/header.sam 2>> $outputDir/errorLog.txt &
 wait
 
-samtools view -F 4 $target/read1_tx/alignment.sam | cat $target/read1_tx/header.sam - | samtools view -b - > $target/read1_tx/mapped.bam 2> $outputDir/errorLog.txt &
-samtools view -F 4 $target/read2_tx/alignment.sam | cat $target/read2_tx/header.sam - | samtools view -b - > $target/read2_tx/mapped.bam 2> $outputDir/errorLog.txt &
+samtools view -F 4 $target/read1_tx/alignment.sam | cat $target/read1_tx/header.sam - | samtools view -b - > $target/read1_tx/mapped.bam 2>> $outputDir/errorLog.txt &
+samtools view -F 4 $target/read2_tx/alignment.sam | cat $target/read2_tx/header.sam - | samtools view -b - > $target/read2_tx/mapped.bam 2>> $outputDir/errorLog.txt &
 wait
 
-
-samtools sort -n -@ $numT -o $target/read1_tx/mapped.sorted.bam $target/read1_tx/mapped.bam 2> $outputDir/errorLog.txt &
-samtools sort -n -@ $numT -o $target/read2_tx/mapped.sorted.bam $target/read2_tx/mapped.bam 2> $outputDir/errorLog.txt &
+half=$((numT/2))
+samtools sort -n -@ $half -o $target/read1_tx/mapped.sorted.bam $target/read1_tx/mapped.bam 2>> $outputDir/errorLog.txt &
+samtools sort -n -@ $half -o $target/read2_tx/mapped.sorted.bam $target/read2_tx/mapped.bam 2>> $outputDir/errorLog.txt &
 wait
 
-bedtools bamtobed -cigar -i $target/read1_tx/mapped.sorted.bam > $target/read1_tx/mapped.sorted.bed 2> $outputDir/errorLog.txt &
-bedtools bamtobed -cigar -i $target/read2_tx/mapped.sorted.bam > $target/read2_tx/mapped.sorted.bed 2> $outputDir/errorLog.txt &
+bedtools bamtobed -cigar -i $target/read1_tx/mapped.sorted.bam > $target/read1_tx/mapped.sorted.bed 2>> $outputDir/errorLog.txt &
+bedtools bamtobed -cigar -i $target/read2_tx/mapped.sorted.bam > $target/read2_tx/mapped.sorted.bed 2>> $outputDir/errorLog.txt &
 wait
 
-python runBedFileSplit_pub.py $target 2> $outputDir/errorLog.txt 
+python runBedFileSplit_pub.py $target 2>> $outputDir/errorLog.txt 
 wait
 
 for file in $target/read1_tx/mapped.sorted.bed_chunk*
 do
 i=${file#*chunk}
-python chimericIdentification_pub.py $outputDir ${i} $geneDic $outputDir/intermediateFiles/chimStats_${i}.txt 2> $outputDir/errorLog.txt 
+python chimericIdentification_pub.py $outputDir ${i} $geneDic $outputDir/intermediateFiles/chimStats_${i}.txt 2>> $outputDir/errorLog.txt 
 done
 wait
 
+python runDeduplication_pub.py $outputDir 2>> $outputDir/errorLog.txt
 
 rm $target/read1_tx/mapped.sorted.bed_chunk*
 rm $target/read2_tx/mapped.sorted.bed_chunk*
 wait
 
-python runDeduplication_pub.py $outputDir 2> $outputDir/errorLog.txt
-wait
-
-python callPPIs_pub.py $outputDir $pCutoff $oddsCutoff $rcCutoff 2> $outputDir/errorLog.txt
+python callPPIs_pub.py $outputDir $pCutoff $oddsCutoff $rcCutoff 2>> $outputDir/errorLog.txt
 
 
 

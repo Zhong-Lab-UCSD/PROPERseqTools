@@ -35,7 +35,7 @@ for file in fileList:
             splitLine=line.strip().split(',')
             mapSum+=int(splitLine[0])
 
-targetFile==open('%s/summary.csv'%(sys.argv[1]),'a')
+targetFile=open('%s/summary.csv'%(sys.argv[1]),'a')
 targetFile.write('#protein-coding_gene_mapped_read_pairs,%d\n'%(mapSum))
 targetFile.write('#chimeric_read_pairs,%d\n'%(chimNum))
 targetFile.close()
