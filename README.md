@@ -66,8 +66,8 @@ properseqTools -a /path/to/read1.fastq
 
 **Required parameters**
 <pre><code>
--a     |String, Path to read1 fastq file
--b     |String, Path to read2 fastq file
+-a     |String, Path to read1 fastq file, fastq.gz also supported
+-b     |String, Path to read2 fastq file, fastq.gz also supported
 -o     |String, Path to output directory
 -i     |String, Path to bwa index of the target transcriptome
 -g     |String, Path to transcirpt, gene and gene type dictionary file
@@ -77,6 +77,7 @@ properseqTools -a /path/to/read1.fastq
 -d     |Float, odds ratio cutoff used to identify protein-protein interactions, default=1
 -p     |Float, false discovery rate cutoff used to identify protein-protein interactions, default=0.05
 -c     |Float, read count cutoff coefficient used to identify protein-protein interactions, default=4
+-j     |String, Job ID to be prepended to the output files and directories, optional, default=PROPERseq"
 -t     |Int, Number of working threads, default=2
 -r     |Char, (T or F), removal of intermediate files or not, default=T
 -h     |Print usage message" 
@@ -91,7 +92,8 @@ chimericReadPairs.csv             |a file that contains the read ids of the iden
 summary.csv                       |a file that contains the summary statistics of running the sample with PROPERseqTools
 errorLog.txt                      |a file that contains error message from the pipeline if any
 processedFastq/                   |a directory that contains the pre-processed fastq files from the sample
-alignment/                        |a directory that contains the alignment files of the pre-processed fastq files from the sample
+alignment/mappedReadPairs.csv     |a file that contains the alignment infomation of all mapped read pairs from the sample
+alignment/*/                      |subdirectories that contain the alignment files of the pre-processed fastq files from the sample
 intermediateFiles/                |an optional directory contains all the intermediat files generated from running the pipeline, this direcotry only exists if '-r' option is set to 'F' 
            
 </code></pre>
