@@ -24,12 +24,11 @@ The schematic diagram below describes the various stages of the PROPERseqTools p
 
 
 ## Software Requirements
-Latest version of required software is recommended
-- [Cutadapt](https://cutadapt.readthedocs.io/en/stable/)
-- [fastp](https://github.com/OpenGene/fastp)
-- [bwa](https://github.com/lh3/bwa)
-- [samtools](http://www.htslib.org/)
-- [bedtools](https://bedtools.readthedocs.io/en/latest/)
+- [Cutadapt](https://cutadapt.readthedocs.io/en/stable/) (2.5 or later)
+- [fastp](https://github.com/OpenGene/fastp) (0.14.1 or later)
+- [bwa](https://github.com/lh3/bwa) (0.7.12-r1039 or later)
+- [samtools](http://www.htslib.org/) (1.8 or later)
+- [bedtools](https://bedtools.readthedocs.io/en/latest/) (2.26.0 or later)
 - Python 3.4 or later, the following python libraries are required:<br />
     - sys
     - collections
