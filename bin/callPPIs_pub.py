@@ -1,11 +1,12 @@
 from collections import defaultdict
+import scipy
 import glob
 import scipy.stats as stats
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import FloatVector
 import sys
 
-targetFile=open('%s/proteinProteinInteractions.csv'%(sys.argv[1]),'w')
+targetFile=open('%s/%sproteinProteinInteractions.csv'%(sys.argv[1],sys.argv[5]),'a')
 
 def getIntCount(filePath):
     dicIntCount_positive=defaultdict(int)
@@ -27,10 +28,6 @@ def getIntCount(filePath):
     #sort
     sorted_x_positive = sorted(dicIntCount_positive.items(), key=lambda kv: kv[1],reverse=True)
     return dicIntCount_positive,dicProteinCount_positive,sorted_x_positive
-
-dicIntCount_positive_8b,dicProteinCount_positive_8b,sorted_x_positive_8b=getIntCount(
-    '%s/chimericReadPairs.csv'%(sys.argv[1]))
-
 
 def identifyPPIs_chimericAdj(sorted_x_positive1_9,dicIntCount_positive1_9,dicProteinCount_positive1_9,coEff,pCutOff,oddsCutoff):
     factor=sum([x[1] for x in sorted_x_positive1_9])/len(sorted_x_positive1_9)
@@ -84,7 +81,11 @@ def identifyPPIs_chimericAdj(sorted_x_positive1_9,dicIntCount_positive1_9,dicPro
             rcList1.append(rcc)
             chiSig.append(chichi)
     print (len(set(list1)))
-    return list1,rcList1,orSig_1,chiSig,pvalueSig
+    return list1,rcList1,orSig_1,chiSig,pvalueSig_1
+
+
+dicIntCount_positive_8b,dicProteinCount_positive_8b,sorted_x_positive_8b=getIntCount(
+    '%s/%schimericReadPairs.csv'%(sys.argv[1],sys.argv[5]))
 
 
 list_PPI,rcList_PPI,orList_PPI,chiList_PPI,pvalueList_PPI=identifyPPIs_chimericAdj(
@@ -92,12 +93,13 @@ list_PPI,rcList_PPI,orList_PPI,chiList_PPI,pvalueList_PPI=identifyPPIs_chimericA
 
 #write into the file
 targetFile.write('Protein1,Protein2,ReadCount,FDR,oddsRatio,chiSquareStat\n')
-for ha in list_super:
+for i in range(len(list_PPI)):
+    ha=list_PPI[i]
     [gene1,gene2]=ha.split(';')
     oddsRatio=str(orList_PPI[i])
     chichi=str(chiList_PPI[i])
     pp=str(pvalueList_PPI[i])
-    rc=str(dicProteinCount_positive_8b[ha])
+    rc=str(dicIntCount_positive_8b[ha])
     infoList=','.join([gene1,gene2,rc,pp,oddsRatio,chichi])
     targetFile.write(infoList)
     targetFile.write('\n')
@@ -105,6 +107,6 @@ for ha in list_super:
 targetFile.close()
 
 
-targetFile==open('%s/summary.csv'%(sys.argv[1]),'a')
+targetFile=open('%s/%ssummary.csv'%(sys.argv[1],sys.argv[5]),'a')
 targetFile.write('#protein-protein_interactions,%d\n'%(len(list_PPI)))
 targetFile.close()

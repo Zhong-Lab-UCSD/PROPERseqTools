@@ -1,7 +1,11 @@
+import glob
 from collections import defaultdict
 import sys
 from cigar import Cigar
 
+targetFile=open('%s/%sintermediateFiles/mappedReadPairs_all_bwa.header'%(sys.argv[1],sys.argv[5]),'w')
+targetFile.write('ReadId,Read1Gene,Read2Gene,R1transcript,R1Start,R1End,Read1Cigar,Read1GeneType,Read1LesserGenes,R2transcript,R2Start,R2End,Read2Cigar,Read2GeneType,Read2LesserGenes\n')
+targetFile.close()
 
 #read in refseq dic
 dicIdGeneName={}
@@ -11,9 +15,7 @@ with open('%s'%(sys.argv[3]),'r') as f:
         splitLine=line.strip().split(',')
         dicIdGeneName[splitLine[0]]=splitLine[1]
         dicIdGeneType[splitLine[0]]=splitLine[2]
-        
-        
-    
+
 #read in read1 and read2 file
 dicReadIdGene1=defaultdict(list)
 dicReadIdGene2=defaultdict(list)
@@ -24,7 +26,7 @@ dicIdtoCigar2=defaultdict(list)
 
 #Count protein-coding mapped read pairs
 dicRead1_count=defaultdict(int)
-with open('%s/alignment/read1_tx/mapped.sorted.bed_chunk%s'%(sys.argv[1],sys.argv[2]),'r') as f:
+with open('%s/%salignment/read1_tx/mapped.sorted.bed_chunk%s'%(sys.argv[1],sys.argv[5],sys.argv[2]),'r') as f:
     for line in f:
         splitLine=line.strip().split('\t')
         readId=splitLine[3]
@@ -37,7 +39,7 @@ with open('%s/alignment/read1_tx/mapped.sorted.bed_chunk%s'%(sys.argv[1],sys.arg
             dicIdtoCigar1[readId].append(cigar1)
             
 idList=[]
-with open('%s/alignment/read2_tx/mapped.sorted.bed_chunk%s'%(sys.argv[1],sys.argv[2]),'r') as f:
+with open('%s/%salignment/read2_tx/mapped.sorted.bed_chunk%s'%(sys.argv[1],sys.argv[5],sys.argv[2]),'r') as f:
     for line in f:
         splitLine=line.strip().split('\t')
         readId=splitLine[3]
@@ -49,19 +51,24 @@ with open('%s/alignment/read2_tx/mapped.sorted.bed_chunk%s'%(sys.argv[1],sys.arg
             dicReadIdPos2[splitLine[3]].append(splitLine[:3])
             dicIdtoCigar2[readId].append(cigar2)
 
-idList=list(set(idList))            
-#identify chimeric reads
-targetFile=open('%s/intermediateFiles/chimericReadPairs_all_bwa.csv_%s'%(sys.argv[1],sys.argv[2]),'w')
-targetFile.write('readId,R1Tx,R1start,R1end,R1Gene,R1Cigar,R2Tx,R2start,R2end,R2Gene,R2Cigar\n')
-count=0
+idList=list(set(idList))
+
+targetFile1=open('%s/%sintermediateFiles/mappedReadPairs_all_bwa.csv_%s'%(sys.argv[1],sys.argv[5],sys.argv[2]),'a')
+targetFile2=open('%s/%sintermediateFiles/chimericReadPairs_all_bwa.csv_%s'%(sys.argv[1],sys.argv[5],sys.argv[2]),'a')
+targetFile2.write('readId,R1Tx,R1start,R1end,R1Gene,R1Cigar,R2Tx,R2start,R2end,R2Gene,R2Cigar\n')
 for readId in idList:
-    geneList1=dicReadIdGene1[readId]
-    geneList2=dicReadIdGene2[readId]
-    #no common genes
+    geneList1=';'.join(list(dicReadIdGene1[readId]))
+    geneList2=';'.join(list(dicReadIdGene2[readId]))
+    cigar1,cigar2=Cigar(dicIdtoCigar1[readId][0]),Cigar(dicIdtoCigar2[readId][0])  
+    [txId1,start1,end1]=dicReadIdPos1[readId][0]
+    [txId2,start2,end2]=dicReadIdPos2[readId][0]
+    gene1,gene2=dicIdGeneName[txId1],dicIdGeneName[txId2]
+    type1,type2=dicIdGeneType[txId1],dicIdGeneType[txId2]
+    targetFile1.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n'
+                     %(readId,gene1,gene2,txId1,start1,end1,str(cigar1),type1,geneList1,txId2,start2,end2,str(cigar2),type2,geneList2))
+
     if len(set(geneList1)&set(geneList2))==0:
-        [txId1,start1,end1]=dicReadIdPos1[readId][0]
-        [txId2,start2,end2]=dicReadIdPos2[readId][0]
-        if dicIdGeneType[txId1]=='mRNA' and dicIdGeneType[txId2]=='mRNA':
+        if type1=='mRNA' and type2=='mRNA':
             #check cigar string
             cigar1,cigar2=Cigar(dicIdtoCigar1[readId][0]),Cigar(dicIdtoCigar2[readId][0])
             cigar1List=list(cigar1.items())
@@ -83,15 +90,14 @@ for readId in idList:
             if flag1 and flag2:
                 gene1,gene2=dicIdGeneName[txId1],dicIdGeneName[txId2]
                 #write file
-                targetFile.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n'
+                targetFile2.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n'
                                  %(readId,txId1,start1,end1,gene1,str(cigar1),txId2,start2,end2,gene2,str(cigar2)))
-                count+=1
 
-targetFile.close()
+    
+targetFile1.close()
+targetFile2.close()
+
 
 targetFile=open(sys.argv[4],'w')
-targetFile.write('%d,%d'%(len(idList),count))
+targetFile.write('%d'%(len(idList)))
 targetFile.close()
-            
-
-

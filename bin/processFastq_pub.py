@@ -25,6 +25,6 @@ with open(sys.argv[2],'r') as f:
 targetFile.close()
 total=total/4
 if sys.argv[4]=='yes':
-    targetFile=open('%s/summary.csv'%(sys.argv[3]),'w')
+    targetFile=open('%s/%ssummary.csv'%(sys.argv[3],sys.argv[5]),'a')
     targetFile.write('#input_read_pairs,%d\n'%(total))
     targetFile.close()

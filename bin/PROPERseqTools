@@ -9,6 +9,7 @@ helpFunction()
    echo -e "\t-o String, Path to output directory, required"
    echo -e "\t-i String, Path to bwa index of target transcriptome, required"
    echo -e "\t-g String, Path to transcript,gene and gene type dictionary file in csv format, required" 
+   echo -e "\t-j String, Job ID to be prepended to the output files and directories, optional, default=PROPERseq"
    echo -e "\t-t Int, Number of working threads, optional, default=2"
    echo -e "\t-r Char (T or F), remove intermediate files or not, optional, default=T"
    echo -e "\t-p Float, false discovery rate used to identify protein-protein interactions, optional, default=0.05"
@@ -16,11 +17,10 @@ helpFunction()
    echo -e "\t-c Float, read count cutoff coefficient used to identify protein-protein interactions, optional, default=4"   
    echo -e "\t-h Print usage message" 
    echo 
-   echo
    exit 1 # Exit script after printing help
 }
 
-while getopts "a:b:t:o:i:h:r:p:d:c:g:" opt
+while getopts "a:b:t:o:i:h:r:p:d:c:g:j:" opt
 do
    case "$opt" in
       a ) read1="$OPTARG" ;;
@@ -33,6 +33,7 @@ do
       d ) oddsCutoff="$OPTARG" ;;
       c ) rcCutoff="$OPTARG" ;;
       g ) geneDic="$OPTARG" ;;
+      j ) jobId="$OPTARG" ;;
       h ) helpFunction ;;
       ? ) helpFunction ;; # Print helpFunction in case parameter is non-existent
    esac
@@ -90,82 +91,107 @@ then
 fi
 wait
 
+if [ ! -z "$jobId" ]
+then
+    jobId=${jobId}_
+else
+    jobId=PROPERseq_
+fi
+wait
+
+
 mkdir $outputDir
-mkdir $outputDir/processedFastq
-mkdir $outputDir/intermediateFiles
-mkdir $outputDir/chimericReadPairs
-mkdir $outputDir/alignment/
+mkdir $outputDir/${jobId}processedFastq
+mkdir $outputDir/${jobId}intermediateFiles
+mkdir $outputDir/${jobId}alignment/
 wait
 
-python getCurrentDateTime_pub.py $outputDir 2>$outputDir/errorLog.txt
-wait
-
-cutadapt -j $numT -a TGACCAAGACGCCAAAAACATAAAGAAAGGCCCGGCGCCATTGGTCA -a TGACCAATGGCGCCGGGCCTTTCTTTATGTTTTTGGCGTCTTGGTCA -g TTCACTGGAGGGGGGCTCACGAGTAAGGAGGATCCAACATG -g CATGTTGGATCCTCCTTACTCGTGAGCCCCCCTCCAGTGAA -O 23 $read1 > $outputDir/intermediateFiles/R1.cutadapt.fastq 2> $outputDir/intermediateFiles/R1.linkers.txt &
-
-cutadapt -j $numT -a TGACCAAGACGCCAAAAACATAAAGAAAGGCCCGGCGCCATTGGTCA -a TGACCAATGGCGCCGGGCCTTTCTTTATGTTTTTGGCGTCTTGGTCA -g TTCACTGGAGGGGGGCTCACGAGTAAGGAGGATCCAACATG -g CATGTTGGATCCTCCTTACTCGTGAGCCCCCCTCCAGTGAA -O 23 $read2 > $outputDir/intermediateFiles/R2.cutadapt.fastq 2> $outputDir/intermediateFiles/R2.linkers.txt &
+python getCurrentDateTime_pub.py $outputDir $jobId
 wait
 
 
-python processFastq_pub.py $outputDir/intermediateFiles/R1.cutadapt.lengthFiltered.fastq $outputDir/intermediateFiles/R1.cutadapt.fastq $outputDir yes 2>> $outputDir/errorLog.txt &
-python processFastq_pub.py $outputDir/intermediateFiles/R2.cutadapt.lengthFiltered.fastq $outputDir/intermediateFiles/R2.cutadapt.fastq $outputDir no 2>> $outputDir/errorLog.txt &
-wait
-
-fastp -w $numT -i $outputDir/intermediateFiles/R1.cutadapt.lengthFiltered.fastq -I $outputDir/intermediateFiles/R2.cutadapt.lengthFiltered.fastq -o $outputDir/processedFastq/R1.cutadapt.fastp.fastq -O $outputDir/processedFastq/R2.cutadapt.fastp.fastq -h $outputDir/intermediateFiles/fastp.html -j $outputDir/intermediateFiles/fastp.json 2>> $outputDir/errorLog.txt
-wait
-
-python writeNumReadPairs_pub.py $outputDir 2>> $outputDir/errorLog.txt
-wait
-
-mkdir $outputDir/alignment/read1_tx
-mkdir $outputDir/alignment/read2_tx
-wait
-
-source=$outputDir/processedFastq
-target=$outputDir/alignment/
+cat $outputDir/${jobId}intermediateFiles/runStart.txt > $outputDir/${jobId}proteinProteinInteractions.csv
+cat $outputDir/${jobId}intermediateFiles/runStart.txt > $outputDir/${jobId}errorLog.txt
+cat $outputDir/${jobId}intermediateFiles/runStart.txt > $outputDir/${jobId}chimericReadPairs.csv
+cat $outputDir/${jobId}intermediateFiles/runStart.txt > $outputDir/${jobId}summary.csv 
 wait
 
 
-bwa mem -a -t $numT $bwaIndex $source/R1.cutadapt.fastp.fastq > $target/read1_tx/alignment.sam 2>> $outputDir/errorLog.txt &
-bwa mem -a -t $numT $bwaIndex $source/R2.cutadapt.fastp.fastq > $target/read2_tx/alignment.sam 2>> $outputDir/errorLog.txt &
+cutadapt -j $numT -a TGACCAAGACGCCAAAAACATAAAGAAAGGCCCGGCGCCATTGGTCA -a TGACCAATGGCGCCGGGCCTTTCTTTATGTTTTTGGCGTCTTGGTCA -g TTCACTGGAGGGGGGCTCACGAGTAAGGAGGATCCAACATG -g CATGTTGGATCCTCCTTACTCGTGAGCCCCCCTCCAGTGAA -O 23 $read1 > $outputDir/${jobId}intermediateFiles/R1.cutadapt.fastq 2> $outputDir/${jobId}intermediateFiles/R1.linkers.txt &
+
+cutadapt -j $numT -a TGACCAAGACGCCAAAAACATAAAGAAAGGCCCGGCGCCATTGGTCA -a TGACCAATGGCGCCGGGCCTTTCTTTATGTTTTTGGCGTCTTGGTCA -g TTCACTGGAGGGGGGCTCACGAGTAAGGAGGATCCAACATG -g CATGTTGGATCCTCCTTACTCGTGAGCCCCCCTCCAGTGAA -O 23 $read2 > $outputDir/${jobId}intermediateFiles/R2.cutadapt.fastq 2> $outputDir/${jobId}intermediateFiles/R2.linkers.txt &
 wait
 
-samtools view -H $target/read1_tx/alignment.sam > $target/read1_tx/header.sam 2>> $outputDir/errorLog.txt &
-samtools view -H $target/read2_tx/alignment.sam > $target/read2_tx/header.sam 2>> $outputDir/errorLog.txt &
+
+python processFastq_pub.py $outputDir/${jobId}intermediateFiles/R1.cutadapt.lengthFiltered.fastq $outputDir/${jobId}intermediateFiles/R1.cutadapt.fastq $outputDir yes ${jobId} 2>> $outputDir/${jobId}errorLog.txt &
+python processFastq_pub.py $outputDir/${jobId}intermediateFiles/R2.cutadapt.lengthFiltered.fastq $outputDir/${jobId}intermediateFiles/R2.cutadapt.fastq $outputDir no ${jobId} 2>> $outputDir/${jobId}errorLog.txt &
 wait
 
-samtools view -F 4 $target/read1_tx/alignment.sam | cat $target/read1_tx/header.sam - | samtools view -b - > $target/read1_tx/mapped.bam 2>> $outputDir/errorLog.txt &
-samtools view -F 4 $target/read2_tx/alignment.sam | cat $target/read2_tx/header.sam - | samtools view -b - > $target/read2_tx/mapped.bam 2>> $outputDir/errorLog.txt &
+fastp -w $numT -i $outputDir/${jobId}intermediateFiles/R1.cutadapt.lengthFiltered.fastq -I $outputDir/${jobId}intermediateFiles/R2.cutadapt.lengthFiltered.fastq -o $outputDir/${jobId}processedFastq/R1.cutadapt.fastp.fastq -O $outputDir/${jobId}processedFastq/R2.cutadapt.fastp.fastq -h $outputDir/${jobId}intermediateFiles/fastp.html -j $outputDir/${jobId}intermediateFiles/fastp.json 2>> $outputDir/${jobId}errorLog.txt
+wait
+
+python writeNumReadPairs_pub.py $outputDir $jobId 2>> $outputDir/${jobId}errorLog.txt
+wait
+
+mkdir $outputDir/${jobId}alignment/read1_tx
+mkdir $outputDir/${jobId}alignment/read2_tx
+wait
+
+source=$outputDir/${jobId}processedFastq
+target=$outputDir/${jobId}alignment
 wait
 
 half=$((numT/2))
-samtools sort -n -@ $half -o $target/read1_tx/mapped.sorted.bam $target/read1_tx/mapped.bam 2>> $outputDir/errorLog.txt &
-samtools sort -n -@ $half -o $target/read2_tx/mapped.sorted.bam $target/read2_tx/mapped.bam 2>> $outputDir/errorLog.txt &
+bwa mem -a -t $half $bwaIndex $source/R1.cutadapt.fastp.fastq > $target/read1_tx/alignment.sam 2>> $outputDir/${jobId}errorLog.txt &
+bwa mem -a -t $half $bwaIndex $source/R2.cutadapt.fastp.fastq > $target/read2_tx/alignment.sam 2>> $outputDir/${jobId}errorLog.txt &
 wait
 
-bedtools bamtobed -cigar -i $target/read1_tx/mapped.sorted.bam > $target/read1_tx/mapped.sorted.bed 2>> $outputDir/errorLog.txt &
-bedtools bamtobed -cigar -i $target/read2_tx/mapped.sorted.bam > $target/read2_tx/mapped.sorted.bed 2>> $outputDir/errorLog.txt &
+samtools view -H $target/read1_tx/alignment.sam > $target/read1_tx/header.sam 2>> $outputDir/${jobId}errorLog.txt &
+samtools view -H $target/read2_tx/alignment.sam > $target/read2_tx/header.sam 2>> $outputDir/${jobId}errorLog.txt &
 wait
 
-python runBedFileSplit_pub.py $target 2>> $outputDir/errorLog.txt 
+samtools view -F 4 $target/read1_tx/alignment.sam | cat $target/read1_tx/header.sam - | samtools view -b - > $target/read1_tx/mapped.bam 2>> $outputDir/${jobId}errorLog.txt &
+samtools view -F 4 $target/read2_tx/alignment.sam | cat $target/read2_tx/header.sam - | samtools view -b - > $target/read2_tx/mapped.bam 2>> $outputDir/${jobId}errorLog.txt &
+wait
+
+
+samtools sort -n -@ $half -o $target/read1_tx/mapped.sorted.bam $target/read1_tx/mapped.bam 2>> $outputDir/${jobId}errorLog.txt &
+samtools sort -n -@ $half -o $target/read2_tx/mapped.sorted.bam $target/read2_tx/mapped.bam 2>> $outputDir/${jobId}errorLog.txt &
+wait
+
+bedtools bamtobed -cigar -i $target/read1_tx/mapped.sorted.bam > $target/read1_tx/mapped.sorted.bed 2>> $outputDir/${jobId}errorLog.txt &
+bedtools bamtobed -cigar -i $target/read2_tx/mapped.sorted.bam > $target/read2_tx/mapped.sorted.bed 2>> $outputDir/${jobId}errorLog.txt &
+wait
+
+python runBedFileSplit_pub.py $target 2>> $outputDir/${jobId}errorLog.txt 
 wait
 
 for file in $target/read1_tx/mapped.sorted.bed_chunk*
 do
 i=${file#*chunk}
-python chimericIdentification_pub.py $outputDir ${i} $geneDic $outputDir/intermediateFiles/chimStats_${i}.txt 2>> $outputDir/errorLog.txt 
+python writeMappedReadPairs_pub.py $outputDir ${i} $geneDic $outputDir/${jobId}intermediateFiles/mappedStats_${i}.txt ${jobId} 2>> $outputDir/${jobId}errorLog.txt 
 done
 wait
 
-python runDeduplication_pub.py $outputDir 2>> $outputDir/errorLog.txt
+cat $outputDir/${jobId}intermediateFiles/mappedReadPairs_all_bwa.header $outputDir/${jobId}intermediateFiles/mappedReadPairs_all_bwa.csv_* > $target/mappedReadPairs.csv
+wait
+
+python runDeduplication_pub.py $outputDir $jobId 2>> $outputDir/${jobId}errorLog.txt
+wait
 
 rm $target/read1_tx/mapped.sorted.bed_chunk*
 rm $target/read2_tx/mapped.sorted.bed_chunk*
 wait
 
-python callPPIs_pub.py $outputDir $pCutoff $oddsCutoff $rcCutoff 2>> $outputDir/errorLog.txt
+python callPPIs_pub.py $outputDir $pCutoff $oddsCutoff $rcCutoff $jobId 2>> $outputDir/${jobId}errorLog.txt
+wait
 
 
+if [ $removeFlag == 'T' ]
+then
+    rm -r $outputDir/${jobId}intermediateFiles
+fi
+wait
 
-
-
-
+gzip $outputDir/${jobId}processedFastq/R2.cutadapt.fastp.fastq &
+gzip $outputDir/${jobId}processedFastq/R1.cutadapt.fastp.fastq &
