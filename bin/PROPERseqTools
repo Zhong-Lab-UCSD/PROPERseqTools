@@ -117,9 +117,9 @@ cat $outputDir/${jobId}intermediateFiles/runStart.txt > $outputDir/${jobId}summa
 wait
 
 
-cutadapt -j $numT -a TGACCAAGACGCCAAAAACATAAAGAAAGGCCCGGCGCCATTGGTCA -a TGACCAATGGCGCCGGGCCTTTCTTTATGTTTTTGGCGTCTTGGTCA -g TTCACTGGAGGGGGGCTCACGAGTAAGGAGGATCCAACATG -g CATGTTGGATCCTCCTTACTCGTGAGCCCCCCTCCAGTGAA -O 23 $read1 > $outputDir/${jobId}intermediateFiles/R1.cutadapt.fastq 2> $outputDir/${jobId}intermediateFiles/R1.linkers.txt &
+cutadapt -j $numT -a TGACCAAGACGCCAAAAACATAAAGAAAGGCCCGGCGCCATTGGTCA -a TGACCAATGGCGCCGGGCCTTTCTTTATGTTTTTGGCGTCTTGGTCA -g TTCACTGGAGGGGGGCTCACGAGTAAGGAGGATCCAACATG -g CATGTTGGATCCTCCTTACTCGTGAGCCCCCCTCCAGTGAA -O 22 $read1 > $outputDir/${jobId}intermediateFiles/R1.cutadapt.fastq 2> $outputDir/${jobId}intermediateFiles/R1.linkers.txt &
 
-cutadapt -j $numT -a TGACCAAGACGCCAAAAACATAAAGAAAGGCCCGGCGCCATTGGTCA -a TGACCAATGGCGCCGGGCCTTTCTTTATGTTTTTGGCGTCTTGGTCA -g TTCACTGGAGGGGGGCTCACGAGTAAGGAGGATCCAACATG -g CATGTTGGATCCTCCTTACTCGTGAGCCCCCCTCCAGTGAA -O 23 $read2 > $outputDir/${jobId}intermediateFiles/R2.cutadapt.fastq 2> $outputDir/${jobId}intermediateFiles/R2.linkers.txt &
+cutadapt -j $numT -a TGACCAAGACGCCAAAAACATAAAGAAAGGCCCGGCGCCATTGGTCA -a TGACCAATGGCGCCGGGCCTTTCTTTATGTTTTTGGCGTCTTGGTCA -g TTCACTGGAGGGGGGCTCACGAGTAAGGAGGATCCAACATG -g CATGTTGGATCCTCCTTACTCGTGAGCCCCCCTCCAGTGAA -O 22 $read2 > $outputDir/${jobId}intermediateFiles/R2.cutadapt.fastq 2> $outputDir/${jobId}intermediateFiles/R2.linkers.txt &
 wait
 
 
@@ -142,8 +142,8 @@ target=$outputDir/${jobId}alignment
 wait
 
 half=$((numT/2))
-bwa mem -a -t $half $bwaIndex $source/R1.cutadapt.fastp.fastq > $target/read1_tx/alignment.sam 2>> $outputDir/${jobId}errorLog.txt &
-bwa mem -a -t $half $bwaIndex $source/R2.cutadapt.fastp.fastq > $target/read2_tx/alignment.sam 2>> $outputDir/${jobId}errorLog.txt &
+bwa mem -v 1 -a -t $half $bwaIndex $source/R1.cutadapt.fastp.fastq > $target/read1_tx/alignment.sam 2>> $outputDir/${jobId}errorLog.txt &
+bwa mem -v 1 -a -t $half $bwaIndex $source/R2.cutadapt.fastp.fastq > $target/read2_tx/alignment.sam 2>> $outputDir/${jobId}errorLog.txt &
 wait
 
 samtools view -H $target/read1_tx/alignment.sam > $target/read1_tx/header.sam 2>> $outputDir/${jobId}errorLog.txt &
