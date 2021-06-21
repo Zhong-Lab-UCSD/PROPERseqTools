@@ -103,3 +103,6 @@ In this repository, we provide example outputs of this pipeline using the PROPER
 - [`proteinProteinInteractions.csv`](...) <br />
 - [`chimericReadPairs.csv`](...)
 - [`summary.csv`](...)
+
+## DOI
+https://doi.org/10.5281/zenodo.5009171
