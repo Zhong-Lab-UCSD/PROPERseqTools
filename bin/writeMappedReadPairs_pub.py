@@ -66,7 +66,8 @@ for readId in idList:
     type1,type2=dicIdGeneType[txId1],dicIdGeneType[txId2]
     targetFile1.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n'
                      %(readId,gene1,gene2,txId1,start1,end1,str(cigar1),type1,geneList1,txId2,start2,end2,str(cigar2),type2,geneList2))
-
+    geneList1=dicReadIdGene1[readId]
+    geneList2=dicReadIdGene2[readId]
     if len(set(geneList1)&set(geneList2))==0:
         if type1=='mRNA' and type2=='mRNA':
             #check cigar string
