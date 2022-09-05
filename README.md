@@ -84,7 +84,7 @@ properseqTools -a /path/to/read1.fastq
            
 </code></pre>
 
-## PROPEPseqTools Output
+## PROPERseqTools Output
 A variety of output files are created for each sample as they are run through the pipeline. The highest level of the output directory contains the following files and subdirectories:
 <pre><code>
 proteinProteinInteractions.csv    |a file that contains the identified protein-protein interactions from the sample
