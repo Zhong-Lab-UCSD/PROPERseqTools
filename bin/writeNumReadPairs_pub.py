@@ -1,9 +1,4 @@
-#STATS from the exceRpt smallRNA-seq pipeline v.4.6.3 for sample serum_1.fastq. Run started at 2020-02-27--00:20:14
-#input_read_pairs
-#read_pairs_used_for_alignment
-#protein-coding_gene_mapped_read_pairs
-#chimeric read pairs
-#protein-protein_interactions
+
 import sys
 
 i=0
