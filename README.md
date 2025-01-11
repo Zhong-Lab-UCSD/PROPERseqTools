@@ -1,5 +1,6 @@
 # PROPERseqTools
-
+##PROPER V.1.0
+Available at https://sysbiocomp.ucsd.edu/proper/
 ## Overview
 Protein-protein Interaction Sequencing (PROPER-seq) is a high-throughput sequencing technology that efficiently maps cell wide protein-protein interactions in vitro. Here, we distribute PROPERseqTools, a standardized data processing pipeline to identify protein-protein interactions from fastq files of PROPER-seq experiments.<br />
 The schematic diagram below describes the various stages of the PROPERseqTools pipeline including pre-processing of the raw reads, alignment to the transcritome, identification of chimeric read pairs and identification of protein-protein interactions.<br />
